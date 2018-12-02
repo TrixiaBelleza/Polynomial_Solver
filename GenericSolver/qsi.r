@@ -23,6 +23,36 @@ getRowNames <- function(size) {
   return(rownames)
 }
 
+getFuncPerInterval <- function(solutionSet, interval) {
+  function_list <- c()
+  solSet_index = 1
+  for (i in 1:interval){
+    if(i == 1){
+      f = paste("f",i, " <- function(x) ", sep ="")
+      func_interval = paste(f, solutionSet[solSet_index], "x + ", solutionSet[solSet_index+1], sep ="") #bx + c = f1(x) 
+      #print(func_interval)
+      function_list <- c(function_list, func_interval)
+      solSet_index = solSet_index + 2
+    }
+    else{
+      f = paste("f",i, " <- function(x) ", sep ="")
+      func_interval = paste(f, solutionSet[solSet_index], "x**2 + ", solutionSet[solSet_index+1], "x + ", solutionSet[solSet_index+2], sep="") #bx + c = f1(x) 
+      #print(func_interval)
+      function_list <- c(function_list, func_interval)
+      solSet_index = solSet_index + 3
+    }
+  }
+  return(function_list)
+}
+
+getFuncWithinInterval <- function(x,functions_per_interval_list, x_value) {
+  for (i in 1:length(functions_per_interval_list)) {
+    if(x[i] <= x_value & x_value <= x[i+1]){
+      return(functions_per_interval_list[i])
+    }
+  }
+}
+
 a_column = 0
 b_column = 1
 c_column = 2
@@ -96,3 +126,5 @@ for (i in 3:(interval+1)){
 print(acm)
 gaussian = Gaussian(acm,(interval*3)-1)
 print(gaussian)
+getFuncWithinInterval(x,getFuncPerInterval(gaussian$solutionSet, interval),5)
+
