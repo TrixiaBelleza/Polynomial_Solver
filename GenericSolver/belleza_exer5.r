@@ -70,10 +70,10 @@ PolynomialRegression <- function(size,x,y) {
 
   return(list(coefficients = GaussianResult$solutionSet, func = s))     
 }
-#x <- c(50,50,50,70,70,70,80,80,80,90,90,90,100,100,100)
-#y <- c(3.3,2.8,2.9,2.3,2.6,2.1,2.5,2.9,2.4,3.0,3.1,2.8,3.3,3.5,3.0)
+x <- c(50,50,50,70,70,70,80,80,80,90,90,90,100,100,100)
+y <- c(3.3,2.8,2.9,2.3,2.6,2.1,2.5,2.9,2.4,3.0,3.1,2.8,3.3,3.5,3.0)
 #size = 3
 
 regression = PolynomialRegression(size,x,y)
 #print(regression$func(100))
-#print(regression$coefficients)
+print(regression$coefficients)

@@ -1,3 +1,28 @@
+source("PolynomialRegression.R")
+getColNames <- function(interval) {
+  colnames <- c()
+  for (i in 1:(interval)) {
+    if(i!=1){
+      colname = paste("a",i,sep="")
+      colnames <- c(colnames, colname)
+    }
+    colname = paste("b",i, sep="")
+    colnames <- c(colnames, colname)  
+    colname = paste("c",i, sep="")
+    colnames <- c(colnames, colname)  
+  }
+  colnames <- c(colnames, "RHS") #adds RHS at the last index of the vector
+  return(colnames)
+}
+
+getRowNames <- function(size) {
+  rownames <- c()
+  for (i in 1:(size)) {
+    rownames <- c(rownames, i)      
+  }
+  return(rownames)
+}
+
 a_column = 0
 b_column = 1
 c_column = 2
@@ -6,7 +31,7 @@ x <- c(3,4.5,7,9)
 y <- c(2.5,1,2.5,0.5)
 interval = length(x)-1
 rhs_column = interval*3
-acm = matrix(data=0, nrow=(interval*3)-1, ncol=(interval*3))
+acm = matrix(data=0, nrow=(interval*3)-1, ncol=(interval*3), dimnames=list(getRowNames((interval*3)-1), getColNames(interval)))
 
 #Condition 1 -> Function values of adjacent polynomials must be equal to the interior knots
 for (i in 3:(interval+1)){
@@ -14,7 +39,6 @@ for (i in 3:(interval+1)){
   b_coeff = x[i-1]
   c_coeff = 1
   rhs = y[i-1]
-  
   if((i-1) != 2){
     acm[row_count,a_column] = a_coeff
   }
@@ -69,5 +93,6 @@ for (i in 3:(interval+1)){
   row_count = row_count + 1
 }
 
-
 print(acm)
+gaussian = Gaussian(acm,(interval*3)-1)
+print(gaussian)
