@@ -2,6 +2,7 @@
 
 # app.R ##
 source("PolynomialRegression.R")
+source("qsi.r")
 library(shiny)
 library(shinydashboard)
 
@@ -51,15 +52,33 @@ if(interactive()) {
       
       tabItem(
         tabName = "qsi",
-        sidebarPanel(
-          fileInput("file1", "Choose CSV File",
-                    accept = c(
-                      "text/csv",
-                      "text/comma-separated-values,text/plain",
-                      ".csv")
+        fluidRow(
+          sidebarPanel(
+            fileInput("file1", "Choose CSV File",
+                      accept = c(
+                        "text/csv",
+                        "text/comma-separated-values,text/plain",
+                        ".csv")
+            ),
+            tags$hr(),
+            checkboxInput("header", "Header", TRUE)
           ),
-          tags$hr(),
-          checkboxInput("header", "Header", TRUE)
+          mainPanel(
+            tableOutput("contents"),
+            h2("f(x) for all intervals"),
+            verbatimTextOutput("func_per_interval"),
+            h2("correct f(x) for input x"),
+            verbatimTextOutput("correct_func")
+          )
+        ),
+        fluidRow(
+          sidebarPanel(
+            numericInput("x_value", 
+                         h5("Enter x value"),
+                         value=0
+            ),
+            actionButton("enter_x_value", "Enter")
+          )  
         )
       )
     )
@@ -98,6 +117,22 @@ if(interactive()) {
       output$regression_polynomial <- renderText({
         reg_output = regression()
         paste("f <- function(x) ", reg_output$polynomial, sep ="")
+      })
+      
+      quadratic_spline_interpolation <- eventReactive(input$enter_x_value, {
+        x_value = input$enter_x_value
+        x <- tbl[,1]
+        y <- tbl[,2]
+        qsi <- QuadraticSplineInterpolation(x,y,x_value)
+        return(list(func_per_interval = qsi$func_per_interval, correct_func = qsi$correct_func))
+      })
+      output$func_per_interval <- renderText({
+        qsi_output = quadratic_spline_interpolation()
+        qsi_output$func_per_interval
+      })
+      output$correct_func <- renderText({
+        qsi_output = quadratic_spline_interpolation
+        qsi_output$correct_func
       })
       return(tbl)
     })

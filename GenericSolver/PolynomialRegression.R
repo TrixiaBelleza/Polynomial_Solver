@@ -19,7 +19,7 @@ getRegRowNames <- function(size) {
   }
   return(rownames)
 }
-getACM <- function(x,y) {
+getACM <- function(x,y,size) {
   if((length(x) != length(y)) | (size < 1)){
     return(NA)
   }
@@ -103,7 +103,7 @@ PolynomialReg <- function(size,x,y) {
   #size = degree
   polynomial = ""
   f = "f <- function(x)"
-  a = getACM(x,y)
+  a = getACM(x,y,size)
   acm = a$augcoeffmatrix
   GaussianResult =  Gaussian(acm, size+1)
   print(GaussianResult)
