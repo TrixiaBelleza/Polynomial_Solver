@@ -27,9 +27,42 @@ if(interactive()) {
             tags$hr(),
             checkboxInput("header", "Header", TRUE)
           ),
-          mainPanel(
-            actionButton("display_table", "Show Table"),
+          sidebarPanel(
+            numericInput("degree", 
+                         h5("Degree of polynomial"),
+                         value=0
+            ),
+            numericInput("func_input",
+                         h5("Integer input x for f(x)"),
+                         value=0),
+            actionButton("do", "Enter")
+          )
+        ),
+        fluidRow(
+          sidebarPanel(
+            actionButton("display_table_poly", "Show Table"),
             tableOutput("contents")
+          )
+        )
+      ),
+      tabItem(
+        tabName = "qsi",
+        fluidRow(
+          sidebarPanel(
+            fileInput("qsi_file", "Choose CSV File",
+                      accept = c(
+                        "text/csv",
+                        "text/comma-separated-values, text/plain",
+                        ".csv")
+            ),
+            tags$hr(),
+            checkboxInput("header", "Header", TRUE)
+          )
+        ),
+        fluidRow(
+          sidebarPanel(
+            actionButton("display_table_qsi", "Show Table"),
+            tableOutput("qsi_contents")
           )
         )
       )
@@ -43,27 +76,39 @@ if(interactive()) {
   )
   
   server <- function(input, output) {
-      table <- eventReactive(input$display_table, {
+    read_table <- function(file) {
+      if (is.null(file))
+        return(NULL)
+      tbl <- read.csv(file$datapath, header = input$header)
+      print(tbl)
+      return(tbl)
+    }
+    poly_table <- eventReactive(input$display_table_poly, {
+      read_table(input$file)
+    })
+    output$contents <- renderTable({
+      table = poly_table()
+    })
+
+    qsi_table <- eventReactive(input$display_table_qsi, {
       # input$file1 will be NULL initially. After the user selects
       # and uploads a file, it will be a data frame with 'name',
       # 'size', 'type', and 'datapath' columns. The 'datapath'
       # column will contain the local filenames where the data can
       # be found.
       
-      file <- input$file
+      file <- input$qsi_file
       
       if (is.null(file))
         return(NULL)
-      tbl <- read.csv(poly_file$datapath, header = input$header)
-     
+      tbl <- read.csv(file$datapath, header = input$header)
+      print(tbl)
       return(tbl)
     })
     
-    output$contents <- renderTable({
-      table()
+    output$qsi_contents <- renderTable({
+      qsi_table()
     })
-    
-    
   }
   
   shinyApp(ui, server)
