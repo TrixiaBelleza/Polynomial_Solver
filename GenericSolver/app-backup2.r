@@ -41,12 +41,27 @@ if(interactive()) {
         fluidRow(
           sidebarPanel(
             tableOutput("contents")
-          ),
+          )
+        )
+      ),
+      tabItem(
+        tabName = "qsi",
+        fluidRow(
           sidebarPanel(
-            h4("Estimate"),
-            verbatimTextOutput("regression_estimate"),
-            h4("Polynomial"),
-            verbatimTextOutput("regression_polynomial")
+            fileInput("qsi_file", "Choose CSV File",
+                      accept = c(
+                        "text/csv",
+                        "text/comma-separated-values, text/plain",
+                        ".csv")
+            ),
+            tags$hr(),
+            checkboxInput("header", "Header", TRUE)
+          )
+        ),
+        fluidRow(
+          sidebarPanel(
+            actionButton("display_table_qsi", "Show Table"),
+            tableOutput("qsi_contents")
           )
         )
       )
@@ -61,16 +76,11 @@ if(interactive()) {
   
   server <- function(input, output) {
     output$contents <- renderTable({
-      # input$file1 will be NULL initially. After the user selects
-      # and uploads a file, it will be a data frame with 'name',
-      # 'size', 'type', and 'datapath' columns. The 'datapath'
-      # column will contain the local filenames where the data can
-      # be found.
-      inFile <- input$file
+      poly_file <- input$file
       
-      if (is.null(inFile))
+      if(is.null(poly_file))
         return(NULL)
-      tbl <- read.csv(inFile$datapath, header = input$header)
+      tbl <- read.csv(poly_file$datapath, header = input$header)
       regression <- eventReactive(input$do, {
         degree = input$degree
         func_input = input$func_input
@@ -79,15 +89,26 @@ if(interactive()) {
         reg <- PolynomialReg(degree,x,y)
         return(list(estimate = reg$func(func_input), polynomial = reg$polynomial))     
       })
-      output$regression_estimate <- renderText({
-        reg_output = regression()
-        reg_output$estimate
-      })
-      output$regression_polynomial <- renderText({
-        reg_output = regression()
-        paste("f <- function(x) ", reg_output$polynomial, sep ="")
-      })
+    })
+    
+    qsi_table <- eventReactive(input$display_table_qsi, {
+      # input$file1 will be NULL initially. After the user selects
+      # and uploads a file, it will be a data frame with 'name',
+      # 'size', 'type', and 'datapath' columns. The 'datapath'
+      # column will contain the local filenames where the data can
+      # be found.
+      
+      file <- input$qsi_file
+      
+      if (is.null(file))
+        return(NULL)
+      tbl <- read.csv(file$datapath, header = input$header)
+      print(tbl)
       return(tbl)
+    })
+    
+    output$qsi_contents <- renderTable({
+      qsi_table()
     })
   }
   
