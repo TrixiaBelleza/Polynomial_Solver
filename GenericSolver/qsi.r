@@ -1,4 +1,8 @@
-source("PolynomialRegression.R")
+this.dir <- dirname(parent.frame(2)$ofile)
+setwd(this.dir)
+
+source("PolynomialRegression.r")
+
 getColNames <- function(interval) {
   colnames <- c()
   for (i in 1:(interval)) {
@@ -140,10 +144,10 @@ QuadraticSplineInterpolation <- function(x,y, x_value) {
   return(list(func_per_interval = func_per_interval, correct_func = correct_func))
 } 
 
-x <- c(3,4.5,7,9)
-y <- c(2.5,1,2.5,0.5)
-x_value = 5
-print(x_value)
-qsi = QuadraticSplineInterpolation(x,y,x_value)
-print(qsi$func_per_interval)
-print(qsi$correct_func)
+#x <- c(3,4.5,7,9)
+#y <- c(2.5,1,2.5,0.5)
+#x_value = 5
+#print(x_value)
+#qsi = QuadraticSplineInterpolation(x,y,x_value)
+#print(qsi$func_per_interval)
+#print(qsi$correct_func)

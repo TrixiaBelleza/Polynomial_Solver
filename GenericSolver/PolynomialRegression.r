@@ -1,6 +1,3 @@
-this.dir <- dirname(parent.frame(2)$ofile)
-setwd(this.dir)
-
 getRegColNames <- function(size) {
   colnames <- c()
   for (i in 1:(size+1)) {

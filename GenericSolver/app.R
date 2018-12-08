@@ -1,7 +1,8 @@
 #install.packages("shinydashboard")
 
 # app.R ##
-source("PolynomialRegression.R")
+source("PolynomialRegression.r")
+source("qsi.r")
 library(shiny)
 library(shinydashboard)
 
@@ -49,6 +50,37 @@ if(interactive()) {
             verbatimTextOutput("regression_polynomial")
           )
         )
+      ),
+      tabItem(
+        tabName = "qsi",
+        fluidRow(
+          sidebarPanel(
+            fileInput("qsi_file", "Choose CSV File",
+                      accept = c(
+                        "text/csv",
+                        "text/comma-separated-values, text/plain",
+                        ".csv")
+            ),
+            tags$hr(),
+            checkboxInput("header", "Header", TRUE)
+          ),
+          sidebarPanel(
+            numericInput("x_value", 
+                         h5("Enter x value"),
+                         value=0
+            ),
+            actionButton("x_val_input", "Enter")
+          )
+        ),
+        fluidRow(
+          sidebarPanel(
+            tableOutput("qsi_contents")
+          ),
+          sidebarPanel(
+            h4("Correct Function"),
+            verbatimTextOutput("correct_func")
+          )
+        )
       )
     )
   )
@@ -61,11 +93,6 @@ if(interactive()) {
   
   server <- function(input, output) {
     output$contents <- renderTable({
-      # input$file1 will be NULL initially. After the user selects
-      # and uploads a file, it will be a data frame with 'name',
-      # 'size', 'type', and 'datapath' columns. The 'datapath'
-      # column will contain the local filenames where the data can
-      # be found.
       inFile <- input$file
       
       if (is.null(inFile))
@@ -89,7 +116,28 @@ if(interactive()) {
       })
       return(tbl)
     })
+    output$qsi_contents <- renderTable({
+      inFile <- input$qsi_file
+      
+      if (is.null(inFile))
+        return(NULL)
+      tbl2 <- read.csv(inFile$datapath, header = input$header)
+      quadratic_spline <- eventReactive(input$x_val_input, {
+        x_value = input$x_value
+        x <- tbl2[,1]
+        y <- tbl2[,2]
+        qsi <- QuadraticSplineInterpolation(x,y,x_value)
+        return(list(func_per_interval = qsi$func_per_interval, correct_func = qsi$correct_func))
+      })
+      output$correct_func <- renderText({
+        qsi_output = quadratic_spline()
+        qsi_output$correct_func
+      })
+      return(tbl2)
+    })
+    
   }
+  
   
   shinyApp(ui, server)
   
