@@ -72,7 +72,7 @@ getLeftmostPositiveCol <- function(acm, curr_row, curr_col) {
 isMatrixFeasible <- function(acm) {
   zero_count = 0
   neg_count = 0
-  for(col in 4:ncol(acm)) {
+  for(col in 16:ncol(acm)) {
     zero_count = 0
     neg_count = 0
     for(row in 1:nrow(acm)) {
@@ -97,25 +97,42 @@ findIndexNotFeasible <- function(acm) {
   negative_activate_var_count = 0
   col_index = 0
   row_index = 0
-  for(col in 4:ncol(acm)) {
+  for(col in 16:ncol(acm)) {
+   # print(paste("COL ", col))
     for(row in 1:nrow(acm)) {
+    #  print(paste("ROW ", row))
+     # print(paste("ACM[row,col] = ", acm[row,col]))
       if(acm[row,col] == -1) {
+      #  print(paste("ENTERED AT Row: ", row, "Col: ", col ))
         negative_activate_var_count = negative_activate_var_count + 1
         col_index = col
         row_index = row
       }
     }
+    if(negative_activate_var_count == 1) {
+      return(list(col_index = col_index, row_index = row_index))
+    }
   }
-  if(negative_activate_var_count == 1) {
-    return(list(col_index = col_index, row_index = row_index))
-  }
+ 
 }
 #acm = matrix(data=0, nrow=9, ncol=16)
-acm = matrix(data=0, nrow=3, ncol=7)
+acm = matrix(data=0, nrow=9, ncol=25)
 
-acm[1,] = c(2,3,6,1,0,0,60)
-acm[2,] = c(1,4,5,0,-1,0,40)
-acm[3,] = c(3,2,3,0,0,1,0)
+#acm[1,] = c(2,3,6,1,0,0,60)
+#acm[2,] = c(1,4,5,0,-1,0,40)
+#acm[3,] = c(3,2,3,0,0,1,0)
+acm[1,] = c(1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,310)
+acm[2,] = c(0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,260)
+acm[3,] = c(0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,1,0,0,0,0,0,0,280)
+
+acm[4,] = c(1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,-1,0,0,0,0,0,180)
+acm[5,] = c(0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,-1,0,0,0,0,80)
+acm[6,] = c(0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,-1,0,0,0,200)
+acm[7,] = c(0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,-1,0,0,160)
+acm[8,] = c(0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,-1,0,220)
+
+acm[9,] = c(10,8,6,5,4,6,5,4,3,6,3,4,5,5,9,0,0,0,0,0,0,0,0,1,0)
+
 print("INITIAL TABLEU")
 print(acm)
 
@@ -127,80 +144,83 @@ print(acm)
 #STEP 2: GAUSS JORDAN
 
 is_matrix_feasible = isMatrixFeasible(acm)
-while(is_matrix_feasible == FALSE) {
+count = 1
+while(count != 5) {
   #find the column not feasible
   not_feasible_index = findIndexNotFeasible(acm)
   not_feasible_col_index = not_feasible_index$col_index
- 
-  pivot_col_index = getLeftmostPositiveCol(acm,not_feasible_index$row_index, col)
-
+  
+  print(paste("not_feasible_col_index", not_feasible_col_index))
+  pivot_col_index = getLeftmostPositiveCol(acm,not_feasible_index$row_index,not_feasible_col_index)
+  print(paste("pivot_col", pivot_col_index))
   #get pivot row and element
   pivot = computeTestRatio(acm, pivot_col_index)
   pivot_row_index = pivot$row
   pivot_element = pivot$element
-  #print(pivot_element)
+  print(paste("pivot_element", pivot_element))
+  print(paste("pivot_row", pivot_row_index))
   #GAUSS-JORDAN
   acm = gaussJordan(acm, pivot_row_index, pivot_col_index, pivot_element)
   print("new acm")
   print(acm)
   is_matrix_feasible = isMatrixFeasible(acm)
+  count = count + 1
 }
 
 #STEP 3 : MAXIMIZATION SIMPLEX
 
 
 #check if last row of acm has negative values
-has_negative = hasNegative(acm[nrow(acm),])
-count = 1
-while(has_negative == TRUE) {
-  print(paste("----ITERATION ", count, "-----"))
-  print("acm in iter")
-  print(acm)
+#has_negative = hasNegative(acm[nrow(acm),])
+#count = 1
+#while(count != 3) {
+ # print(paste("----ITERATION ", count, "-----"))
+  #print("acm in iter")
+  #print(acm)
   #GET PIVOT COL, PIVOT ROW, PIVOT ELEMENT
-  pivot_col_index = getPivotCol(acm)
-  print(pivot_col_index)
-  pivot = computeTestRatio(acm, pivot_col_index)
-  pivot_row_index = pivot$row
-  pivot_element = pivot$element
+  #pivot_col_index = getPivotCol(acm)
+  #print(pivot_col_index)
+  #pivot = computeTestRatio(acm, pivot_col_index)
+  #pivot_row_index = pivot$row
+  #pivot_element = pivot$element
   
   #GAUSS-JORDAN
-  acm = gaussJordan(acm, pivot_row_index, pivot_col_index, pivot_element)
-  print("new acm")
-  print(acm)
+  #acm = gaussJordan(acm, pivot_row_index, pivot_col_index, pivot_element)
+  #print(acm)
   #check if last row of acm has negative values
-  has_negative = hasNegative(acm[nrow(acm),])
-  count = count + 1
-}
+  #has_negative = hasNegative(acm[nrow(acm),])
+  #count = count + 1
+#}
 
 #Get solution set
-sol_set <- c()
+#sol_set <- c()
 
-for(col in 1:4){ #3 is the last col before slack var
-  zero_count = 0
-  one_count = 0
-  row_index = 0
-  if(col == 4) {
-    col = ncol(acm) - 1  #get optimized value to sol_set
-  }
-  for(row in 1:nrow(acm)) {
-    if(acm[row,col] == 1) {
-      one_count = 1
-      row_index = row
-    }
-    if(acm[row,col] == 0) {
-      zero_count = zero_count + 1
-    }
-  }
+#for(col in 1:16){ #3 is the last col before slack var
+ # zero_count = 0
+  #one_count = 0
+  #row_index = 0
+  #if(col == 16) {
+   # col = ncol(acm) - 1  #get optimized value to sol_set
+  #}
+  #for(row in 1:nrow(acm)) {
+   # if(acm[row,col] == 1) {
+    #  one_count = 1
+     # row_index = row
+    #}
+    #if(acm[row,col] == 0) {
+     # zero_count = zero_count + 1
+    #}
+#  }
   
-  if(zero_count == (nrow(acm)-1) & one_count == 1) {
-    sol_set <- c(sol_set, acm[row_index, ncol(acm)]) #get RHS of that row
-  }
-  else {
-    sol_set <- c(sol_set, 0)
-  }
-}
+ # if(zero_count == (nrow(acm)-1) & one_count == 1) {
+  #  sol_set <- c(sol_set, acm[row_index, ncol(acm)]) #get RHS of that row
+  #}
+  #else {
+   # sol_set <- c(sol_set, 0)
+  #}
+#}
 
-sol_set[length(sol_set)] = sol_set[length(sol_set)] * -1 #change Z to positive since Z = -W
-print(sol_set)
+#sol_set[length(sol_set)] = sol_set[length(sol_set)] * -1 #change Z to positive since Z = -W
+#print(sol_set)
 
 

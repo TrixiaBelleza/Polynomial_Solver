@@ -90,7 +90,7 @@ if(interactive()) {
         tabName = "simplex",
         mainPanel(
           h2("hello"),
-          rHandsontableOutput("table"),
+          rHandsontableOutput("hot"),
           br()
         )
       )
@@ -152,21 +152,8 @@ if(interactive()) {
       return(tbl2)
     })
     
-    plants = c("Denver", "Phoenix", "Dallas")
-    Total = c(0,0,0)
-    Sacramento_California = c(0,0,0)
-    SaltLakeCity_Utah = c(0,0,0)
-    Albuquerque_NewMexico = c(0,0,0)
-    Chicago_Illinois = c(0,0,0)
-    NewYorkCity = c(0,0,0)
-    df = data.frame(Plants=plants, Total=Total, Sacramento_California=Sacramento_California, SaltLakeCity_Utah=SaltLakeCity_Utah,  Albuquerque_NewMexico= Albuquerque_NewMexico, Chicago_Illinois=Chicago_Illinois, NewYorkCity=NewYorkCity)
-    
-    datavalues <- reactiveValues(data=df) #Keep track of changes
-    
-    output$table <- renderRHandsontable({
-      rhandsontable(datavalues$data, readOnly = TRUE, width=850, height=300)
-    })
   }
+  
   shinyApp(ui, server)
   
 }
