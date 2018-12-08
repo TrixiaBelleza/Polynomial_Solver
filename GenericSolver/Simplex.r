@@ -37,6 +37,7 @@ getTemp <- function(acm, pivot_row_index, pivot_col_index, current_row) {
   }
   return(temp)
 }
+
 gaussJordan <- function(acm, pivot_row_index, pivot_col_index, pivot_element) {
   acm[pivot_row_index,] = acm[pivot_row_index,] / pivot_element     #PR = PR/PE
   
@@ -58,25 +59,6 @@ hasNegative <- function(list_of_values) {
     }
   }
   return(FALSE)
-}
-
-isColumnFeasible <- function(column_values) {
-  value_count = 0
-  row = 0
-  for(i in 1:length(column_values)) {
-    #check if column ay may iisang value lang (either 1 or -1)
-    if(column_values[i] == -1) {
-      value_count = value_count + 1
-      row = i
-    }
-  }
-  
-  if((row > 0) & value_count == 1) {
-    return(list(bool=FALSE, row = i))
-  }
-  else{
-    return(list(bool=TRUE, row=0))
-  }
 }
 
 getLeftmostPositiveCol <- function(acm, curr_row, curr_col) {
@@ -191,3 +173,34 @@ while(has_negative == TRUE) {
 }
 
 #Get solution set
+sol_set <- c()
+
+for(col in 1:4){ #3 is the last col before slack var
+  zero_count = 0
+  one_count = 0
+  row_index = 0
+  if(col == 4) {
+    col = ncol(acm) - 1  #get optimized value to sol_set
+  }
+  for(row in 1:nrow(acm)) {
+    if(acm[row,col] == 1) {
+      one_count = 1
+      row_index = row
+    }
+    if(acm[row,col] == 0) {
+      zero_count = zero_count + 1
+    }
+  }
+  
+  if(zero_count == (nrow(acm)-1) & one_count == 1) {
+    sol_set <- c(sol_set, acm[row_index, ncol(acm)]) #get RHS of that row
+  }
+  else {
+    sol_set <- c(sol_set, 0)
+  }
+}
+
+sol_set[length(sol_set)] = sol_set[length(sol_set)] * -1 #change Z to positive since Z = -W
+print(sol_set)
+
+
