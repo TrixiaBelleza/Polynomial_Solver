@@ -88,94 +88,101 @@ gaussJordan <- function(acm, pivot_row_index, pivot_col_index, pivot_element) {
   }
   return(acm)
 }
-acm = matrix(data=0, nrow=9, ncol=25)
 
-#acm[1,] = c(1,1,1,0,0,0,0,10)
-#acm[2,] = c(-1,-2,0,1,0,0,0,-12)
-#acm[3,] = c(-2,-1,0,0,1,0,0,-12)
-#acm[4,] = c(-1,0,0,0,0,1,0,-3)
-#acm[5,] = c(5,6,0,0,0,0,1,0)
-
-#acm[1,] = c(-1,-1,1,0,0,0,-7)
-#acm[2,] = c(9,5,0,1,0,0,45)
-#acm[3,] = c(-2,-1,0,0,1,0,-8)
-#acm[4,] = c(-20,-15,0,0,0,1,0)
-
-acm[1,] = c(1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,310)
-acm[2,] = c(0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,260)
-acm[3,] = c(0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,1,0,0,0,0,0,0,280)
-
-acm[4,] = c(-1,0,0,0,0,-1,0,0,0,0,-1,0,0,0,0,0,0,0,1,0,0,0,0,0,-180)
-acm[5,] = c(0,-1,0,0,0,0,-1,0,0,0,0,-1,0,0,0,0,0,0,0,1,0,0,0,0,-80)
-acm[6,] = c(0,0,-1,0,0,0,0,-1,0,0,0,0,-1,0,0,0,0,0,0,0,1,0,0,0,-200)
-acm[7,] = c(0,0,0,-1,0,0,0,0,-1,0,0,0,0,-1,0,0,0,0,0,0,0,1,0,0,-160)
-acm[8,] = c(0,0,0,0,-1,0,0,0,0,-1,0,0,0,0,-1,0,0,0,0,0,0,0,1,0,-220)
-
-acm[9,] = c(10,8,6,5,4,6,5,4,3,6,3,4,5,5,9,0,0,0,0,0,0,0,0,1,0)
-
-print(acm)
-
-has_negative = hasNegative(acm[,ncol(acm)]) 
-count = 1
-while(has_negative == TRUE) {
-  pivot_row = mostNegativeRow(acm[,ncol(acm)])
-  pivot = getPhase1PivotColandElement(acm,pivot_row)
-  acm = gaussJordan(acm, pivot_row, pivot$pivot_col, pivot$pivot_element)
-  print("New ACM")
-  print(acm)
+removeNegativeRHS <- function(acm){
   has_negative = hasNegative(acm[,ncol(acm)]) 
-  count = count + 1
+  while(has_negative == TRUE) {
+    pivot_row = mostNegativeRow(acm[,ncol(acm)])
+    pivot = getPhase1PivotColandElement(acm,pivot_row)
+    acm = gaussJordan(acm, pivot_row, pivot$pivot_col, pivot$pivot_element)
+    has_negative = hasNegative(acm[,ncol(acm)]) 
+  }
+  return(acm)
 }
 
-#check if last row of acm has negative values
-has_negative = hasNegative(acm[nrow(acm),])
-print(has_negative)
-count = 1
-while(has_negative == TRUE) {
-  print(paste("----ITERATION ", count, "-----"))
-  print("acm in iter")
-  print(acm)
-  #GET PIVOT COL, PIVOT ROW, PIVOT ELEMENT
-  pivot_col_index = getPivotCol(acm)
-  pivot = computeTestRatio(acm, pivot_col_index)
-  pivot_row_index = pivot$row
-  pivot_element = pivot$element
-    #GAUSS-JORDAN
-  acm = gaussJordan(acm, pivot_row_index, pivot_col_index, pivot_element)
-  print(acm)
+getSolutionSet <- function(acm) {
+  #Get solution set
+  sol_set <- c()
+  
+  for(col in 1:16){ #3 is the last col before slack var
+    zero_count = 0
+    one_count = 0
+    row_index = 0
+    if(col == 16) {
+      col = ncol(acm) - 1  #get optimized value to sol_set
+    }
+    for(row in 1:nrow(acm)) {
+      if(acm[row,col] == 1) {
+        one_count = 1
+        row_index = row
+      }
+      if(acm[row,col] == 0) {
+        zero_count = zero_count + 1
+      }
+    }
+    if(zero_count == (nrow(acm)-1) & one_count == 1) {
+      sol_set <- c(sol_set, acm[row_index, ncol(acm)]) #get RHS of that row
+    }
+    else {
+      sol_set <- c(sol_set, 0)
+    }
+  }
+  sol_set[length(sol_set)] = sol_set[length(sol_set)] * -1 #change Z to positive since Z = -W
+  return(sol_set)
+}
+
+Simplex <- function(acm) {
+  acm = removeNegativeRHS(acm)
   #check if last row of acm has negative values
   has_negative = hasNegative(acm[nrow(acm),])
-  count = count + 1
+  print(has_negative)
+  count = 1
+  while(has_negative == TRUE) {
+    print(paste("----ITERATION ", count, "-----"))
+    print("acm in iter")
+    print(acm)
+    #GET PIVOT COL, PIVOT ROW, PIVOT ELEMENT
+    pivot_col_index = getPivotCol(acm)
+    pivot = computeTestRatio(acm, pivot_col_index)
+    pivot_row_index = pivot$row
+    pivot_element = pivot$element
+    #GAUSS-JORDAN
+    acm = gaussJordan(acm, pivot_row_index, pivot_col_index, pivot_element)
+    print(acm)
+    #check if last row of acm has negative values
+    has_negative = hasNegative(acm[nrow(acm),])
+    count = count + 1
+  }
+  sol_set = getSolutionSet(acm)
 }
 
-
-#Get solution set
-sol_set <- c()
-
-for(col in 1:16){ #3 is the last col before slack var
-  zero_count = 0
-  one_count = 0
-  row_index = 0
-  if(col == 16) {
-    col = ncol(acm) - 1  #get optimized value to sol_set
-  }
-  for(row in 1:nrow(acm)) {
-    if(acm[row,col] == 1) {
-      one_count = 1
-      row_index = row
-    }
-    if(acm[row,col] == 0) {
-     zero_count = zero_count + 1
-    }
-  }
-  if(zero_count == (nrow(acm)-1) & one_count == 1) {
-    sol_set <- c(sol_set, acm[row_index, ncol(acm)]) #get RHS of that row
-  }
-  else {
-    sol_set <- c(sol_set, 0)
-  }
+generateACM <- function(values, supply, demands) {
+  #values is a list of values for objective function 
+  #supply is a list of total supply for each plant
+  #demands is a list of demand values for each warehouse
+  
+  
+  acm = matrix(data=0, nrow=9, ncol=25)
+  acm[1,] = c(1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,supply[1])
+  acm[2,] = c(0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,supply[2])
+  acm[3,] = c(0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,1,0,0,0,0,0,0,supply[3])
+  
+  acm[4,] = c(-1,0,0,0,0,-1,0,0,0,0,-1,0,0,0,0,0,0,0,1,0,0,0,0,0,(demands[1] * -1))
+  acm[5,] = c(0,-1,0,0,0,0,-1,0,0,0,0,-1,0,0,0,0,0,0,0,1,0,0,0,0,(demands[2] * -1))
+  acm[6,] = c(0,0,-1,0,0,0,0,-1,0,0,0,0,-1,0,0,0,0,0,0,0,1,0,0,0,(demands[3] * -1))
+  acm[7,] = c(0,0,0,-1,0,0,0,0,-1,0,0,0,0,-1,0,0,0,0,0,0,0,1,0,0,(demands[4] * -1))
+  acm[8,] = c(0,0,0,0,-1,0,0,0,0,-1,0,0,0,0,-1,0,0,0,0,0,0,0,1,0,(demands[5] * -1))
+  
+  #acm[9,] = c(10,8,6,5,4,6,5,4,3,6,3,4,5,5,9,0,0,0,0,0,0,0,0,1,0)
+  acm[9,] = c(values[1],values[2],values[3],values[4],values[5],values[6],values[7],values[8],values[9],values[10],values[11],values[12],values[13],values[14],values[15],0,0,0,0,0,0,0,0,1,0)
+  
+  print(acm)
+  return(acm)  
 }
-
-sol_set[length(sol_set)] = sol_set[length(sol_set)] * -1 #change Z to positive since Z = -W
-print(sol_set)
+values =  c(10,8,6,5,4,6,5,4,3,6,3,4,5,5,9)
+supply = c(310,260,280)
+demand = c(180,80,200,160,220)
+acm = generateACM(values,supply,demand)
+print("SIMPLEX!")
+print(Simplex(acm))
 
