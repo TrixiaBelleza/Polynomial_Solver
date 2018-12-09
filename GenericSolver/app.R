@@ -164,20 +164,35 @@ if(interactive()) {
     
     df = data.frame(Plants=plants, Total=Total, Sacramento_California=Sacramento_California, SaltLakeCity_Utah=SaltLakeCity_Utah,  Albuquerque_NewMexico= Albuquerque_NewMexico, Chicago_Illinois=Chicago_Illinois, NewYorkCity=NewYorkCity)
     
-    #datavalues <- reactiveValues(data=df) #Keep track of changes
-    
     output$simplex_output_table <- renderRHandsontable({
       rhandsontable(df, readOnly = TRUE, width=850, height=300) %>%
         hot_row(5, readOnly = FALSE) %>%
+        hot_cell(5, "Total", readOnly=TRUE) %>%
         hot_cell(5, "Plants", readOnly = TRUE)
     })
-    
     
     df2 = data.frame(plants = c("Denver", "Phoenix", "Dallas", "Shipping Cost"), supply = c(310,260,280, 0), Sacramento_California = c(10,6,3,0), SaltLakeCity_Utah = c(8,5,4,0), Albuquerque_NewMexico = c(6,4,5,0), Chicago_Illinois = c(5,3,5,0), NewYorkCity = c(4,6,9,0))
     output$simplex_input_table <- renderRHandsontable({
       rhandsontable(df2, width = 850, height = 300) %>%
         hot_col("plants", readOnly = TRUE) 
     })
+    
+    #datavalues <- reactiveValues(data=df2) #Keep track of changes
+    
+    observeEvent(
+      input$simplex_input_table$changes$changes,
+      {
+        xi = input$simplex_input_table$changes$changes[[1]][[1]] #Fetches the row index of the cell where change occurred
+        yi = input$simplex_input_table$changes$changes[[1]][[2]] #Fetches the col index of the cell where change occurred.
+        old = input$simplex_input_table$changes$changes[[1]][[3]] #Fetches the old value of the cell
+        new = input$simplex_input_table$changes$changes[[1]][[4]] #Fetches the new value of the cell
+        
+        print(xi)
+        print(paste("Old: ", old))
+        print(paste("new: ",new))
+      }
+    )
+    
     
   }
   shinyApp(ui, server)
