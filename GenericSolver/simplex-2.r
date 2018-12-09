@@ -90,14 +90,19 @@ gaussJordan <- function(acm, pivot_row_index, pivot_col_index, pivot_element) {
 }
 
 removeNegativeRHS <- function(acm){
+  iterations <- list()
   has_negative = hasNegative(acm[,ncol(acm)]) 
+  count = 1
   while(has_negative == TRUE) {
+    iterations[[count]] <- acm 
     pivot_row = mostNegativeRow(acm[,ncol(acm)])
     pivot = getPhase1PivotColandElement(acm,pivot_row)
     acm = gaussJordan(acm, pivot_row, pivot$pivot_col, pivot$pivot_element)
     has_negative = hasNegative(acm[,ncol(acm)]) 
+    count = count+1
   }
-  return(acm)
+  
+  return(list(acm = acm, iterations = iterations, count=count))
 }
 
 getSolutionSet <- function(acm) {
@@ -132,57 +137,57 @@ getSolutionSet <- function(acm) {
 }
 
 Simplex <- function(acm) {
-  acm = removeNegativeRHS(acm)
+  iterations <- list()
+  remove_negative_rhs =  removeNegativeRHS(acm)
+  acm = remove_negative_rhs$acm
+  iterations = remove_negative_rhs$iterations
+  count = remove_negative_rhs$count
   #check if last row of acm has negative values
   has_negative = hasNegative(acm[nrow(acm),])
-  print(has_negative)
-  count = 1
   while(has_negative == TRUE) {
-    print(paste("----ITERATION ", count, "-----"))
-    print("acm in iter")
-    print(acm)
+    iterations[[count]] <- acm 
     #GET PIVOT COL, PIVOT ROW, PIVOT ELEMENT
     pivot_col_index = getPivotCol(acm)
     pivot = computeTestRatio(acm, pivot_col_index)
     pivot_row_index = pivot$row
     pivot_element = pivot$element
+  
     #GAUSS-JORDAN
     acm = gaussJordan(acm, pivot_row_index, pivot_col_index, pivot_element)
-    print(acm)
     #check if last row of acm has negative values
     has_negative = hasNegative(acm[nrow(acm),])
     count = count + 1
   }
+  
   sol_set = getSolutionSet(acm)
+  return(list(sol_set = sol_set, iterations = iterations))
 }
 
 generateACM <- function(values, supply, demands) {
   #values is a list of values for objective function 
   #supply is a list of total supply for each plant
   #demands is a list of demand values for each warehouse
-  
-  
   acm = matrix(data=0, nrow=9, ncol=25)
   acm[1,] = c(1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,supply[1])
   acm[2,] = c(0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,supply[2])
   acm[3,] = c(0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,1,0,0,0,0,0,0,supply[3])
-  
   acm[4,] = c(-1,0,0,0,0,-1,0,0,0,0,-1,0,0,0,0,0,0,0,1,0,0,0,0,0,(demands[1] * -1))
   acm[5,] = c(0,-1,0,0,0,0,-1,0,0,0,0,-1,0,0,0,0,0,0,0,1,0,0,0,0,(demands[2] * -1))
   acm[6,] = c(0,0,-1,0,0,0,0,-1,0,0,0,0,-1,0,0,0,0,0,0,0,1,0,0,0,(demands[3] * -1))
   acm[7,] = c(0,0,0,-1,0,0,0,0,-1,0,0,0,0,-1,0,0,0,0,0,0,0,1,0,0,(demands[4] * -1))
   acm[8,] = c(0,0,0,0,-1,0,0,0,0,-1,0,0,0,0,-1,0,0,0,0,0,0,0,1,0,(demands[5] * -1))
-  
-  #acm[9,] = c(10,8,6,5,4,6,5,4,3,6,3,4,5,5,9,0,0,0,0,0,0,0,0,1,0)
   acm[9,] = c(values[1],values[2],values[3],values[4],values[5],values[6],values[7],values[8],values[9],values[10],values[11],values[12],values[13],values[14],values[15],0,0,0,0,0,0,0,0,1,0)
-  
-  print(acm)
   return(acm)  
 }
-values =  c(10,8,6,5,4,6,5,4,3,6,3,4,5,5,9)
-supply = c(310,260,280)
-demand = c(180,80,200,160,220)
-acm = generateACM(values,supply,demand)
-print("SIMPLEX!")
-print(Simplex(acm))
+#values =  c(10,8,6,5,4,6,5,4,3,6,3,4,5,5,9)
+#supply = c(310,260,280)
+#demand = c(180,80,200,160,220)
+#acm = generateACM(values,supply,demand)
+#print(acm)
+#print("a")
+#print("SIMPLEX!")
+#simplex = Simplex(acm)
+#iterations = simplex$iteration
+#solution_set = simplex$sol_set
 
+#print(iterations)

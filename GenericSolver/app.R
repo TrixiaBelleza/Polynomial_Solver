@@ -1,8 +1,9 @@
 #install.packages("shinydashboard")
-
+#install.packages("DT")
 # app.R ##
 source("PolynomialRegression.r")
 source("qsi.r")
+source("simplex-2.r")
 library(rhandsontable)
 library(shiny)
 library(shinydashboard)
@@ -10,9 +11,9 @@ library(shinydashboard)
 if(interactive()) {
   sidebar <- dashboardSidebar(
     sidebarMenu(
-      menuItem("Polynomial Regression", tabName = "poly", icon = icon("dashboard")),
-      menuItem("Quadratic Spline Interpolation", icon = icon("th"), tabName = "qsi"),
-      menuItem("Simplex", icon = icon("th"), tabName = "simplex")
+      menuItem("Polynomial Regression", tabName = "poly"),
+      menuItem("Quadratic Spline Interpolation", tabName = "qsi"),
+      menuItem("Simplex", tabName = "simplex")
     )
   )
   body <- dashboardBody(
@@ -89,10 +90,29 @@ if(interactive()) {
       tabItem(
         tabName = "simplex",
         mainPanel(
-          h4("Number to ship from plant to warehouse:"),
-          rHandsontableOutput("simplex_output_table"),
-          h4("Shipping costs from plant to warehouse:"),
-          rHandsontableOutput("simplex_input_table")
+          fluidPage(
+            fluidRow(
+              column(12,
+                verbatimTextOutput("NumShip"),
+                tableOutput("output_simplex"),
+                actionButton("input_simplex", "Enter"),
+                uiOutput("newWindowContent", style = "display: none;"),
+                tags$script(HTML("
+                     $(document).ready(function() {
+                     if(window.location.hash != '') {
+                     $('div:not(#newWindowContent)').hide();
+                     $('#newWindowContent').show();
+                     $('#newWindowContent').appendTo('body');
+                     }
+                     })
+                     ")),
+                a(href = "#NEW", target = "_blank",
+                  actionButton("show_iter", "Show Iterations")),
+                h4("Shipping costs from plant to warehouse:"),
+                rHandsontableOutput("simplex_input_table")
+              )
+            )
+          )
         )
       )
     )
@@ -104,6 +124,8 @@ if(interactive()) {
     body
   )
   
+  iterations <- list()
+  count <- 0
   server <- function(input, output) {
     output$contents <- renderTable({
       inFile <- input$file
@@ -153,47 +175,107 @@ if(interactive()) {
       return(tbl2)
     })
     
-    plants = c("Denver", "Phoenix", "Dallas", "Totals:", "Demands by")
+    plants = c("Denver", "Phoenix", "Dallas", "Shipping Cost", "Demands By:")
+    supply = c(310,260,280, 0, 0)
+    SC = c(10,6,3,0, 180)
+    SL = c(8,5,4,0, 80)
+    NM = c(6,4,5,0, 200)
+    CI = c(5,3,5,0, 160)
+    NYC = c(4,6,9,0, 220)
     
-    Sacramento_California = c(0,0,0,0, 180)
-    SaltLakeCity_Utah = c(0,0,0,0, 80)
-    Albuquerque_NewMexico = c(0,0,0,0, 200)
-    Chicago_Illinois = c(0,0,0,0, 160)
-    NewYorkCity = c(0,0,0,0, 220)
-    Total = Sacramento_California +  SaltLakeCity_Utah +Albuquerque_NewMexico +  Chicago_Illinois + NewYorkCity 
+    SC[4] = SC[1] + SC[2] + SC[3]
+    SL[4] = SL[1] + SL[2] + SL[3]
+    NM[4] = NM[1] + NM[2] + NM[3]
+    CI[4] = CI[1] + CI[2] + CI[3]
+    NYC[4] = NYC[1] + NYC[2] + NYC[3]
     
-    df = data.frame(Plants=plants, Total=Total, Sacramento_California=Sacramento_California, SaltLakeCity_Utah=SaltLakeCity_Utah,  Albuquerque_NewMexico= Albuquerque_NewMexico, Chicago_Illinois=Chicago_Illinois, NewYorkCity=NewYorkCity)
+    values = c(SC[1], SL[1], NM[1], CI[1], NYC[1], SC[2], SL[2], NM[2], CI[2], NYC[2],SC[3], SL[3], NM[3], CI[3], NYC[3],SC[4], SL[4], NM[4], CI[4], NYC[4])
+    df2 = data.frame(plants = plants, supply = supply, Sacramento_California =SC, SaltLakeCity_Utah = SL, Albuquerque_NewMexico = NM, Chicago_Illinois = CI, NewYorkCity = NYC)
     
-    output$simplex_output_table <- renderRHandsontable({
-      rhandsontable(df, readOnly = TRUE, width=850, height=300) %>%
-        hot_row(5, readOnly = FALSE) %>%
-        hot_cell(5, "Total", readOnly=TRUE) %>%
-        hot_cell(5, "Plants", readOnly = TRUE)
-    })
-    
-    df2 = data.frame(plants = c("Denver", "Phoenix", "Dallas", "Shipping Cost"), supply = c(310,260,280, 0), Sacramento_California = c(10,6,3,0), SaltLakeCity_Utah = c(8,5,4,0), Albuquerque_NewMexico = c(6,4,5,0), Chicago_Illinois = c(5,3,5,0), NewYorkCity = c(4,6,9,0))
-    output$simplex_input_table <- renderRHandsontable({
-      rhandsontable(df2, width = 850, height = 300) %>%
-        hot_col("plants", readOnly = TRUE) 
-    })
-    
-    #datavalues <- reactiveValues(data=df2) #Keep track of changes
-    
+    datavalues <- reactiveValues(data=df2)
     observeEvent(
-      input$simplex_input_table$changes$changes,
-      {
-        xi = input$simplex_input_table$changes$changes[[1]][[1]] #Fetches the row index of the cell where change occurred
-        yi = input$simplex_input_table$changes$changes[[1]][[2]] #Fetches the col index of the cell where change occurred.
-        old = input$simplex_input_table$changes$changes[[1]][[3]] #Fetches the old value of the cell
-        new = input$simplex_input_table$changes$changes[[1]][[4]] #Fetches the new value of the cell
-        
-        print(xi)
-        print(paste("Old: ", old))
-        print(paste("new: ",new))
+      input$simplex_input_table$changes$changes,{
+        xi = input$simplex_input_table$changes$changes[[1]][[1]]
+        yi =  input$simplex_input_table$changes$changes[[1]][[2]]
+        print(paste("Yi: ", yi))
+        datavalues$data <- hot_to_r(input$simplex_input_table)
+        datavalues$data[4, yi+1] = datavalues$data[1, yi+1] + datavalues$data[2, yi+1] + datavalues$data[3, yi+1]
+        print(datavalues$data)
       }
     )
+    output$simplex_input_table <- renderRHandsontable({
+      rhandsontable(datavalues$data, width = 850, height = 300) %>%
+        hot_col("plants", readOnly = TRUE) %>%
+        hot_cell(5,"supply", readOnly = TRUE) %>%
+        hot_row(4, readOnly=TRUE)
+    })
+   
+    simplex <- eventReactive(input$input_simplex, {
+      supply_values <- c()
+      objective_values <- c()
+      demand_values <- c()
+      for(i in 1:3) {
+        supply_values <- c(supply_values,input$simplex_input_table$data[[i]][[2]])  
+      }
+      for(k in 3:7) {
+        demand_values <- c(demand_values, input$simplex_input_table$data[[5]][[k]])
+      }
+      for(m in 1:3) {
+        for(j in 3:7) {
+          objective_values <- c(objective_values, input$simplex_input_table$data[[m]][[j]])
+        }
+      }
+      acm = generateACM(objective_values, supply_values, demand_values)
+      simplex = Simplex(acm)
+      sol_set = simplex$sol_set
+      iterations <<- simplex$iteration
+      result = matrix(data=0, nrow=4, ncol=7, dimnames=list(c("a","b","c","d"), c("Plants","Total","Sacramento,California","Salt Lake City, Utah","Albuquerque, New Mexico","Chicago, Illinois","New York City, New York")))
+      total_denver = sol_set[1] + sol_set[2] + sol_set[3] + sol_set[4] + sol_set[5]
+      total_phoenix = sol_set[6] + sol_set[7] + sol_set[8] + sol_set[9] + sol_set[10]
+      total_dallas = sol_set[11] + sol_set[12] + sol_set[13] + sol_set[14] + sol_set[15]
+      total_SC = sol_set[1] + sol_set[6] + sol_set[11]
+      total_SLC = sol_set[2] + sol_set[7] + sol_set[12]
+      total_NM = sol_set[3] + sol_set[8] + sol_set[13]
+      total_CI = sol_set[4] + sol_set[9] + sol_set[14]
+      total_NYC = sol_set[5] + sol_set[10] + sol_set[15]
+      
+      result[1,] = c("Denver", total_denver, sol_set[1], sol_set[2], sol_set[3], sol_set[4], sol_set[5]) 
+      result[2,] = c("Phoenix", total_phoenix, sol_set[6], sol_set[7], sol_set[8], sol_set[9], sol_set[10])
+      result[3,] = c("Dallas", total_dallas, sol_set[11], sol_set[12], sol_set[13], sol_set[14], sol_set[15])
+      result[4,] = c("Totals", "", total_SC, total_SLC, total_NM, total_CI, total_NYC)
+      output$NumShip <- renderText({
+        print("Number to ship from plant to warehouse:")
+      })
+      print(result)
+      
+    })
     
+   
+    output$output_simplex <- renderTable({
+      simplex()
+    })
     
+    output$newWindowContent <- renderUI({
+      mainPanel(
+        fluidRow(
+          box(
+            title = "Simplex Iterations", width=NULL, status = "primary",
+            div(style = 'overflow-x: scroll', DT::dataTableOutput('trial')),
+            actionButton("go_next", "Next")
+          )
+        )
+      )
+    })
+    
+    go_next <- eventReactive(input$go_next, {
+      count <<- count + 1
+      DT::datatable(iterations[[count]], colnames = c("x1", "x2", "x3", "x4","x5", "x6", "x7", "x8", "x9", "x10", "x11", "x12", "x13", "x14", "x15", "s1", "s2", "s3", "s4", "s5","s6", "s7", "s8", "Z", "RHS"),
+                    options = list(dom = 't'))
+     
+    })
+    output$trial <- DT::renderDataTable({
+      go_next()
+    })
   }
   shinyApp(ui, server)
   
