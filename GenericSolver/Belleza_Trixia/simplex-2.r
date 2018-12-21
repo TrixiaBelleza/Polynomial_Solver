@@ -157,6 +157,7 @@ Simplex <- function(acm) {
     #check if last row of acm has negative values
     has_negative = hasNegative(acm[nrow(acm),])
     count = count + 1
+    sol_set = getSolutionSet(acm)
   }
   
   sol_set = getSolutionSet(acm)
@@ -188,6 +189,6 @@ acm = generateACM(values,supply,demand)
 #print("SIMPLEX!")
 simplex = Simplex(acm)
 iterations = simplex$iteration
-#solution_set = simplex$sol_set
-
+solution_set = simplex$sol_set
+print("A")
 print(iterations)
